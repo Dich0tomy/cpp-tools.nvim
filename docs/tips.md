@@ -49,6 +49,53 @@ Apart from having specialized editor integrations we should understand and maxim
 
 ### Common issues
 
+#### clang doesn't work in my code at all
+That typically means you haven't generated a [compilation database](https://clangd.llvm.org/installation#project-setup).  
+It's a JSON file that maps each file to the command it was compiled with.
+
+For CMake, you have to set the `-DCMAKE_EXPORT_COMPILE_COMMANDS` macro. Meson and certain other build systems generate it automatically.
+
+If your build system doesn't support generating the compilation database, use [`bear`](https://github.com/rizsotto/Bear).
+
+#### clangd doesn't see standard headers
+
+If you're not on Nix, then try everything listed in the official [**Fixing missing system headers**](https://clangd.llvm.org/guides/system-headers#fixing-missing-system-header-issues) section.
+
+If you're on Nix and any of the above don't work, you may be running into [this issue](https://github.com/NixOS/nixpkgs/issues/76486).
+The fix for that is setting an environment variable with the path to your clangd, and capturing it in your editor, then using it,
+instead of `clangd`, in the command.
+
+>[!NOTE]
+> cpp-tools.nvim automatically uses `(os.getenv('CLANGD_PATH') or 'clangd')`
+
+This is how this would look like in Nix:
+```nix
+mkShell {
+  ...
+
+  env.CLANGD_PATH = lib.getExe' pkgs.clang-tools_18 "clangd";
+}
+```
+
+#### clangd sees `expected` and other similar headers but doesn't see their exposed types and functions
+This is due to the fact that these are guarded by special "feature test macros" of form `__cpp_lib_x`, `__cpp_has_x`, etc.
+
+If you already have `clangd` configured you can go to defintion on the header. It should be guarded by something akin to this:
+```cpp
+#if __cplusplus > 202002L && __cpp_concepts >= 202002L
+```
+If you `vim.lsp.buf.hover()` on the respective macro names (usually the `K` keymap), you will see their values.
+For example, currently, for me, on clangd 18.0.7 `__cplusplus` is defined as `201703`, and `__cpp_concepts` doesn't exist at all.
+
+If your compiler compiles your code *fine*, but clangd doesn't see these, there are two possible fixes:
+1. Point clangd to your compiler by appending the [`--query=driver=<path globs>`](https://clangd.llvm.org/guides/system-headers#query-driver) option to the commandline
+2. If the above doesn't work, add or modify `.clangd` file in your project root directory with the following content:
+```yaml
+CompileFlags:
+  Add: ['-D__cpp_concepts=202002'] # The exact flags and their values depend on the specific headers and types
+```
+
+
 ## Other useful development plugins
 
 ## Other useful C/C++ focused plugins
