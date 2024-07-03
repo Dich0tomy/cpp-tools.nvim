@@ -41,15 +41,39 @@ Apart from having specialized editor integrations we should understand and maxim
 
 ### Integration with clang-tidy
 
+Clangd integrates natively with `clang-tidy`, which is a static analysis tool for C++.
+To enable the integration you have to pass in the `--clang-tidy` flag to clangd.
+
+> [!NOTE]
+> `cpp-tools.nvim` does that automatically in its default configuration.
+
+To configure clang-tidy, add a `.clang-tidy` file in your project root directory.  
+Available options can be explored by running `clang-tidy --help` (grep for `Configuration files`),  
+or by visiting [The llvm clang-tidy releases docs](https://releases.llvm.org/18.1.0/tools/clang/tools/extra/docs/clang-tidy/index.html#using-clang-tidy.) (search for `Configuration files` as well).
+
 ### Integration with clang-format
+
+Certain language servers offer a builtin formatting capability.
+`clangd` does so, but it needs `clang-format` to be present in the environment.
+
+Configuring `clang-format` involves creating a `.clang-format` file with specific formatting options: [Clang-Format style options](https://clang.llvm.org/docs/ClangFormatStyleOptions.html).
 
 ### Useful commandline options
 
-### `.clangd`
+Listing and explaining them would be pointless, as the builtin `--help` command already does so very well.
+I recommend to run `clangd --help` yourself to see what options are available, some of them are really useful.
+
+### Clangd configuration files
+
+Clangd, as most clang tools allows to create a global or project local configuration file which will further refine its actions.
+To configure clangd, place a `.clangd` file in your project root directory and add your options there.
+
+Available options [are listed here](https://clangd.llvm.org/config)
 
 ### Common issues
 
 #### clang doesn't work in my code at all
+
 That typically means you haven't generated a [compilation database](https://clangd.llvm.org/installation#project-setup).  
 It's a JSON file that maps each file to the command it was compiled with.
 
@@ -78,6 +102,7 @@ mkShell {
 ```
 
 #### clangd sees `expected` and other similar headers but doesn't see their exposed types and functions
+
 This is due to the fact that these are guarded by special "feature test macros" of form `__cpp_lib_x`, `__cpp_has_x`, etc.
 
 If you already have `clangd` configured you can go to defintion on the header. It should be guarded by something akin to this:
@@ -95,7 +120,10 @@ CompileFlags:
   Add: ['-D__cpp_concepts=202002'] # The exact flags and their values depend on the specific headers and types
 ```
 
-
 ## Other useful development plugins
 
+TBD.
+
 ## Other useful C/C++ focused plugins
+
+TBD.
