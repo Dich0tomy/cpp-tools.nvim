@@ -37,6 +37,8 @@ one whose job is to bring business value.
 
 ## Configuring clangd properly
 
+Apart from having specialized editor integrations we should understand and maximize the usage of our existing tools.
+
 ### Integration with clang-tidy
 
 ### Integration with clang-format
