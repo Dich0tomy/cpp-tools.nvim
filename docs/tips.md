@@ -120,6 +120,36 @@ CompileFlags:
   Add: ['-D__cpp_concepts=202002'] # The exact flags and their values depend on the specific headers and types
 ```
 
+#### clangd doesn't show full completions for all items
+
+Use the `--completion-style` with `detailed` value.
+
+>[!NOTE]
+> cpp-tools.nvim does that automatically.
+
+#### clangd doesn't show all the symbols from my codebase, only the ones from current namespace/scope
+
+Use the `--all-scopes-completion` flag.
+
+>[!NOTE]
+> cpp-tools.nvim does that automatically.
+
+#### clangd doesn't complete function args when accepting a completion
+
+Use the `--function-arg-placeholders` flag.
+
+>[!NOTE]
+> cpp-tools.nvim does that automatically.
+
+#### clangd doesn't add includes when accepting completion items
+
+Use the `--header-insertion` flag with the `iwyu` value.
+Also use `--head-insertion-decorators` for clangd to prepend a dot for completions which will insert an include.
+
+>[!NOTE]
+> cpp-tools.nvim does that automatically. It also offers a module which automatically and nicely sorts includes. <!-- TODO: This -->
+
+
 ## Other useful development plugins
 
 TBD.
