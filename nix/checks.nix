@@ -39,5 +39,13 @@
 
       luaPackages = ps: [ps.plenary-nvim];
     };
+
+    checks.luacheck = pkgs.writeShellApplication {
+      name = "luacheck";
+
+      runtimeInputs = [pkgs.luajitPackages.luacheck];
+
+      text = "luacheck .";
+    };
   };
 }
