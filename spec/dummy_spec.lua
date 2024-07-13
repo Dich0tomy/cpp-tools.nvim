@@ -1,0 +1,10 @@
+describe('Test example', function()
+	it('Test can access vim namespace', function()
+		assert(vim, 'Cannot access vim namespace')
+		assert.are.same(vim.trim('  a '), 'a')
+	end)
+
+	it('Test can access plenary.nvim dependency', function()
+		assert(require('plenary'), 'Could not access plenary')
+	end)
+end)

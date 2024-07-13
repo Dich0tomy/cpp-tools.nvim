@@ -1,0 +1,26 @@
+/*
+
+#GH, git
+!.gitignore
+!.github/
+
+# Meta
+!LICENSE
+
+# Nix
+!nix/
+!default.nix
+!flake.nix
+!flake.lock
+
+# Plugin
+!lua/
+!doc/
+!docs/
+!ftplugin/
+!*.rockspec
+
+# Plugin test & lint
+!spec/
+!.busted
+!.luacheckrc
