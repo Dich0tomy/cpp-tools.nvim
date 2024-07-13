@@ -7,4 +7,3 @@
 Nothing yet :)
 
 See [general tips for working with C++ in neovim](../docs/tips.md).
-
