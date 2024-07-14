@@ -11,6 +11,8 @@
 # Collaborators consistency
 !.editorconfig
 !stylua.toml
+!.pre-commit-config.yaml
+!git-conventional-commits.yaml
 
 # Nix
 !nix/

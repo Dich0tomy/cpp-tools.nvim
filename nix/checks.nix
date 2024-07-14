@@ -11,6 +11,14 @@
       overlays = [inputs.neorocks.overlays.default];
     };
 
+		checks.pre-commit = pkgs.writeShellApplication {
+			name = "pre-commit-check";
+
+			runtimeInputs = [pkgs.pre-commit];
+
+			text = "pre-commit run --all-files";
+		};
+
     checks.default = pkgs.writeShellApplication {
       name = "typos-check";
 
