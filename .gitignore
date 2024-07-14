@@ -10,6 +10,8 @@
 
 # Collaborators consistency
 !.editorconfig
+!stylua.toml
+
 # Nix
 !nix/
 !default.nix
