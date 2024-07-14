@@ -1,0 +1,14 @@
+name: Flake check
+
+on:
+  pull_request:
+  push:
+  workflow_call:
+
+jobs:
+  nix-flake-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: DeterminateSystems/nix-installer-action@v10
+    - run: nix flake check -L

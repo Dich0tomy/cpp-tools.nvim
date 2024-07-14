@@ -6,6 +6,7 @@
 
 # Meta
 !LICENSE
+!TODO.md
 
 # Nix
 !nix/
