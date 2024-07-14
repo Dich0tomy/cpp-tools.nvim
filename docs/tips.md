@@ -105,7 +105,7 @@ mkShell {
 
 This is due to the fact that these are guarded by special "feature test macros" of form `__cpp_lib_x`, `__cpp_has_x`, etc.
 
-If you already have `clangd` configured you can go to defintion on the header. It should be guarded by something akin to this:
+If you already have `clangd` configured you can go to definition on the header. It should be guarded by something akin to this:
 ```cpp
 #if __cplusplus > 202002L && __cpp_concepts >= 202002L
 ```

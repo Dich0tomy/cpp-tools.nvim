@@ -9,10 +9,10 @@ function M.line_count(str)
 	for i = 1, length - 1 do
 		local c = str:sub(i, i)
 		if c == '\n' then
-      if (i ~= (length - 2)) then
-        count = count + 1
-      end
-    end
+			if i ~= (length - 2) then
+				count = count + 1
+			end
+		end
 	end
 
 	return count
@@ -31,19 +31,19 @@ end
 ---@param arr2 T[] second array
 ---@return boolean # are the arrays equal
 function M.arrays_equal(arr1, arr2)
-  if arr1 == arr2 then
-    return true
-  elseif #arr1 ~= #arr2 then
-    return false
-  end
+	if arr1 == arr2 then
+		return true
+	elseif #arr1 ~= #arr2 then
+		return false
+	end
 
-  for i = 1, #arr1 do
-    if arr1[i] ~= arr2[i] then
-      return false
-    end
-  end
+	for i = 1, #arr1 do
+		if arr1[i] ~= arr2[i] then
+			return false
+		end
+	end
 
-  return true
+	return true
 end
 
 return M

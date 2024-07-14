@@ -1,41 +1,41 @@
 describe('array_equals', function()
-  local iter = require('cpp-tools.lib.iter')
+	local iter = require('cpp-tools.lib.iter')
 
-  it('Two same references to empty are equal', function()
-    local empty = {}
-    local a = empty
-    local b = empty
+	it('Two same references to empty are equal', function()
+		local empty = {}
+		local a = empty
+		local b = empty
 
-    assert.is.truthy(iter.arrays_equal(a, b))
-  end)
+		assert.is.truthy(iter.arrays_equal(a, b))
+	end)
 
-  it('Two different references to empty are equal', function()
-    local a = {}
-    local b = {}
+	it('Two different references to empty are equal', function()
+		local a = {}
+		local b = {}
 
-    assert.is.truthy(iter.arrays_equal(a, b))
-  end)
+		assert.is.truthy(iter.arrays_equal(a, b))
+	end)
 
-  it('Two same values are equal', function()
-    local a = { 1, 2 }
-    local b = { 1, 2 }
+	it('Two same values are equal', function()
+		local a = { 1, 2 }
+		local b = { 1, 2 }
 
-    assert.is.truthy(iter.arrays_equal(a, b))
-  end)
+		assert.is.truthy(iter.arrays_equal(a, b))
+	end)
 
-  it('Two same values with different order are not equal', function()
-    local a = { 1, 2 }
-    local b = { 2, 1 }
+	it('Two same values with different order are not equal', function()
+		local a = { 1, 2 }
+		local b = { 2, 1 }
 
-    assert.is.falsy(iter.arrays_equal(a, b))
-  end)
+		assert.is.falsy(iter.arrays_equal(a, b))
+	end)
 
-  it('Two same values with different values', function()
-    local a = { '' }
-    local b = { 1 }
+	it('Two same values with different values', function()
+		local a = { '' }
+		local b = { 1 }
 
-    assert.is.falsy(iter.arrays_equal(a, b))
-  end)
+		assert.is.falsy(iter.arrays_equal(a, b))
+	end)
 end)
 
 describe('line_count', function()
@@ -45,17 +45,17 @@ describe('line_count', function()
 		assert.are.equal(iter.line_count(''), 1)
 	end)
 
-  it('Returns 1 for a non empty string with one line', function()
-    assert.are.equal(iter.line_count('Hello there'), 1)
-  end)
+	it('Returns 1 for a non empty string with one line', function()
+		assert.are.equal(iter.line_count('Hello there'), 1)
+	end)
 
-  it('Returns 1 for a string with a trailing newlien', function()
-    assert.are.equal(iter.line_count('Foo\n'), 1)
-  end)
+	it('Returns 1 for a string with a trailing newlien', function()
+		assert.are.equal(iter.line_count('Foo\n'), 1)
+	end)
 
-  it('Returns 2 for a string with a trailing newline and content after it', function()
-    assert.are.equal(iter.line_count('Foo\nBar'), 2)
-  end)
+	it('Returns 2 for a string with a trailing newline and content after it', function()
+		assert.are.equal(iter.line_count('Foo\nBar'), 2)
+	end)
 
 	it('Returns X for a string with X lines (ignoring last newline)', function()
 		local three_lined_string = [[
