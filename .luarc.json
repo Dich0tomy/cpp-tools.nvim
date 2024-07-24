@@ -1,0 +1,31 @@
+{
+  "Lua": {
+    "diagnostics": {
+			"unusedLocalExclude": [ "_*" ]
+    },
+    "globals": [
+      "vim"
+    ],
+    "workspace": {
+    	"checkThirdParty": false,
+      "ignoreDir": [
+        ".git",
+        ".github",
+        ".direnv",
+        "result",
+        "nix",
+        "doc",
+				"docs"
+      ],
+      "library": [
+				"lua",
+				"$VIMRUNTIME",
+        "${3rd}/busted/library",
+        "${3rd}/luassert/library"
+      ]
+    }
+  },
+  "runtime": {
+    "version": "LuaJIT"
+  }
+}
