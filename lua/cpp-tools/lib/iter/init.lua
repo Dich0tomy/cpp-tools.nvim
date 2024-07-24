@@ -49,63 +49,59 @@ function M.arrays_equal(arr1, arr2)
 end
 
 function M.__test()
-	describe('array_equals', function()
-		local iter = require('lua.cpp-tools.lib.iter.init')
-
+	describe('`array_equals()`', function()
 		it('Two same references to empty are equal', function()
 			local empty = {}
 			local a = empty
 			local b = empty
 
-			assert.is.truthy(iter.arrays_equal(a, b))
+			assert.is.truthy(M.arrays_equal(a, b))
 		end)
 
 		it('Two different references to empty are equal', function()
 			local a = {}
 			local b = {}
 
-			assert.is.truthy(iter.arrays_equal(a, b))
+			assert.is.truthy(M.arrays_equal(a, b))
 		end)
 
 		it('Two same values are equal', function()
 			local a = { 1, 2 }
 			local b = { 1, 2 }
 
-			assert.is.truthy(iter.arrays_equal(a, b))
+			assert.is.truthy(M.arrays_equal(a, b))
 		end)
 
 		it('Two same values with different order are not equal', function()
 			local a = { 1, 2 }
 			local b = { 2, 1 }
 
-			assert.is.falsy(iter.arrays_equal(a, b))
+			assert.is.falsy(M.arrays_equal(a, b))
 		end)
 
 		it('Two same values with different values', function()
 			local a = { '' }
 			local b = { 1 }
 
-			assert.is.falsy(iter.arrays_equal(a, b))
+			assert.is.falsy(M.arrays_equal(a, b))
 		end)
 	end)
 
-	describe('line_count', function()
-		local iter = require('lua.cpp-tools.lib.iter.init')
-
+	describe('`line_count()`', function()
 		it('Returns 1 for an empty string', function()
-			assert.are.equal(iter.line_count(''), 1)
+			assert.are.equal(M.line_count(''), 1)
 		end)
 
 		it('Returns 1 for a non empty string with one line', function()
-			assert.are.equal(iter.line_count('Hello there'), 1)
+			assert.are.equal(M.line_count('Hello there'), 1)
 		end)
 
 		it('Returns 1 for a string with a trailing newlien', function()
-			assert.are.equal(iter.line_count('Foo\n'), 1)
+			assert.are.equal(M.line_count('Foo\n'), 1)
 		end)
 
 		it('Returns 2 for a string with a trailing newline and content after it', function()
-			assert.are.equal(iter.line_count('Foo\nBar'), 2)
+			assert.are.equal(M.line_count('Foo\nBar'), 2)
 		end)
 
 		it('Returns X for a string with X lines (ignoring last newline)', function()
@@ -114,16 +110,14 @@ function M.__test()
 			second line
 			third line]]
 
-			assert.are.equal(iter.line_count(three_lined_string), 3)
+			assert.are.equal(M.line_count(three_lined_string), 3)
 		end)
 	end)
 
-	describe('lines', function()
-		local iter = require('lua.cpp-tools.lib.iter.init')
-
+	describe('`lines()`', function()
 		it('Returns one empty line untouched', function()
 			local empty_line = ''
-			local lines = iter.lines(empty_line)
+			local lines = M.lines(empty_line)
 
 			assert.are.equal(#lines, 1)
 			assert.are.equal(lines[1], empty_line)
@@ -131,7 +125,7 @@ function M.__test()
 
 		it('Returns one non empty line untouched', function()
 			local empty_line = 'asdasdasdasdasd'
-			local lines = iter.lines(empty_line)
+			local lines = M.lines(empty_line)
 
 			assert.are.equal(#lines, 1)
 			assert.are.equal(lines[1], empty_line)
@@ -141,7 +135,7 @@ function M.__test()
 			local lines_arr = { 'line1', 'line2', 'line3' }
 			local lines_str = vim.fn.join(lines_arr, '\n')
 
-			assert.is.truthy(iter.arrays_equal(iter.lines(lines_str), lines_arr))
+			assert.is.truthy(M.arrays_equal(M.lines(lines_str), lines_arr))
 		end)
 	end)
 end
