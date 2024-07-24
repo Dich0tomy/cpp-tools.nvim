@@ -38,7 +38,7 @@ local function ensure_dependencies()
 		:each(function(not_found_dep) end)
 end
 
-local M
+local M = {}
 
 function M.check()
 	validate_config()

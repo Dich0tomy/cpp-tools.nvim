@@ -38,7 +38,6 @@
           inherit root;
           fileset = fs.unions [
             (root + /ftplugin)
-            (root + /spec)
             (root + /lua)
             (root + /.busted)
             (fs.fileFilter (f: f.hasExt "rockspec") root)

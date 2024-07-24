@@ -28,6 +28,5 @@
 !*.rockspec
 
 # Plugin test & lint
-!spec/
 !.busted
 !.luacheckrc
