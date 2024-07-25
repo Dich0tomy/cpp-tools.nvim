@@ -62,6 +62,7 @@ function M.partition(range, pred, proj_beg)
 		vim.iter(range):map(proj_beg):filter(fp.nah(pred)):totable() or {}
 end
 
+---@package
 function M.__test()
 	describe('`array_equals()`', function()
 		it('Two same references to empty are equal', function()

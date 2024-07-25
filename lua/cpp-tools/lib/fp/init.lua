@@ -161,6 +161,7 @@ function M.fmt(str)
 	end
 end
 
+---@package
 function M.__test()
 	describe('`flip()`', function()
 		it('Flips a two arg function', function()
