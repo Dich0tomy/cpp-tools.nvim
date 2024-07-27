@@ -82,6 +82,52 @@ local Typename = {
 -- End Types
 --------------------------------------------------
 
+---Removes duplicates from the list of matches.
+--- TODO: In the future just find them and warn about them
+--- Warn about optional type shadowing separately
+---
+---In the case of two types in which one is optional and the other isn't, the one that isn't optional is removed,
+---as `T|T?` actually means `T|T|nil`.
+---
+---@param matches cpp-tools.luakittens.Matches
+local function remove_duplicates(matches)
+	local iter = require('cpp-tools.lib.iter')
+
+	local strip_opt = function(match)
+		local m = vim.fn.copy(match)
+		m.opt = nil
+		return m
+	end
+
+	local trivial_remove_duplicates = function(matches)
+		local out = {}
+
+		vim.iter(matches):each(function(m)
+			if not vim.iter(out):find(function(x)
+				return vim.deep_equal(x, m)
+			end) then
+				table.insert(out, m)
+			end
+		end)
+
+		return out
+	end
+
+	local opt_matches, matches = iter.partition(matches, function(m)
+		return vim.tbl_get(m, 'opt')
+	end)
+
+	vim.iter(ipairs(matches)):each(function(i, m)
+		vim.iter(opt_matches):each(function(om)
+			if vim.deep_equal(strip_opt(om), m) then
+				table.remove(matches, i)
+			end
+		end)
+	end)
+
+	return vim.tbl_extend('error', trivial_remove_duplicates(matches), trivial_remove_duplicates(opt_matches))
+end
+
 ---Parses a type annotation with a grammar similar to that of luaCATS - luaKITTENS
 ---
 ---The differences are:
@@ -146,7 +192,7 @@ function M.parse(kitty)
 		return false, 'Cannot parse kitty\'s grammar.'
 	end
 
-	return true, matches --[=[@as cpp-tools.luakittens.Matches ]=]
+	return true, remove_duplicates(matches) --[=[@as cpp-tools.luakittens.Matches ]=]
 end
 
 ---@package
@@ -289,6 +335,22 @@ function M.__test()
 				{ fund('nil'), arr(fund('string')), tup(fund('string'), fund('number')) },
 				parse('nil|[]string|(string, number)')
 			)
+		end)
+	end)
+
+	describe('`remove_duplicates()`', function()
+		it('Leaves out a single type', function()
+			assert.are.same(parse('string'), remove_duplicates(parse('string')))
+		end)
+
+		it('Removes duplicates', function()
+			assert.are.same(parse('string|number'), remove_duplicates(parse('string|number|string|number')))
+		end)
+
+		it('Prefers optional types', function()
+			assert.are.same(parse('string?'), remove_duplicates(parse('string?|string')))
+
+			assert.are.same(parse('string?'), remove_duplicates(parse('string|string?')))
 		end)
 	end)
 end
