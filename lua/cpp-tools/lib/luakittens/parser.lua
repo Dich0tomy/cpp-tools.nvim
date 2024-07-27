@@ -1,15 +1,5 @@
 local M = {}
 
---[[
-1. Parse
-2. Remove grammar duplicates
-3. Rewrite some grammar
-	- `nil|foo` -> `foo?`
-	- `a|b|c|any` -> `any`
-	- `opt = '?'` -> `opt = true`
-3.
-]]
-
 --------------------------------------------------
 -- Types
 --------------------------------------------------
@@ -82,6 +72,75 @@ local Typename = {
 -- End Types
 --------------------------------------------------
 
+--------------------------------------------------
+-- AST type constructors
+--------------------------------------------------
+
+local function fund(t)
+	return { kind = 'fundamental', type = t }
+end
+
+local function arr(t)
+	return { kind = 'array', type = t }
+end
+
+local function tuple(...)
+	return { kind = 'tuple', types = { ... } }
+end
+
+local function dict(k, v)
+	return { kind = 'dict', key = k, val = v }
+end
+
+local function field(k, v)
+	return { key = k, val = v }
+end
+
+--- Adds `opt = '?'` into the type, thus marking it as optional
+---
+---@param type cpp-tools.luakittens.Type
+local function make_opt(type)
+	type.opt = '?'
+	return type
+end
+
+--------------------------------------------------
+-- End AST type constructors
+--------------------------------------------------
+
+---Normalizes the resulting AST:
+--- - `T|nil` -> `foo?`
+--- - `T|U|...|any` -> `any`
+---
+---@param matches cpp-tools.luakittens.Matches
+local function normalize(matches)
+	local nil_idx = nil
+	local has_nil = vim.iter(ipairs(matches)):any(function(i, m)
+		if m.kind == TypeKind.Fundamental and m.type == Typename.Nil then
+			nil_idx = i
+			return true
+		end
+		return false
+	end)
+
+	local has_any = vim.iter(matches):any(function(m)
+		return m.type == Typename.Any
+	end)
+
+	local prev_matches_size = #matches
+
+	if has_any then
+		matches = { fund('any') }
+	end
+
+	if has_nil and (prev_matches_size == 2 or has_any) then
+		table.remove(matches, nil_idx)
+		return { make_opt(matches[1]) }
+	end
+
+	return matches
+end
+
 ---Removes duplicates from the list of matches.
 --- TODO: In the future just find them and warn about them
 --- Warn about optional type shadowing separately
@@ -137,29 +196,30 @@ end
 --- - arrays use the `[]type` syntax instead of `type[]`
 --- - tuples use `()` instead of `[]`
 --- - the key-value table syntax (`table<T, U>`) is not supported, instead only the dict version exists - `{ [T]: U }`
---- - the syntax is more restrictive, the following things are not allowed, because they're illogical:
+--- - the syntax is more restrictive, the following things are not allowed:
 --- 	- `nil?` - an optional type already means `T|nil`, `nil|nil` doesn't make sense
+--- 	- TODO: specifying `nil` as a key to a table/dict - in lua that means deleting a key from a table
 ---
 ---@param kitty cpp-tools.luakittens.Kitten a luaKITTEN definition
 ---@return boolean, string|cpp-tools.luakittens.Matches
-function M.parse(kitty)
+local function only_parse(kitty)
 	local grammar = [==[
 		grammar <- ws alternative_type ws eof
 
 		alternative_type <- any_type ws ('|' ws alternative_type )*
 
-		any_type <- {| optional_type / nil_type |}
-		optional_type <- array_type / dict_type / table_type / tuple_type / fundamental_type opt?
+		any_type <- optional_type / {| nil_type |}
+		optional_type <- {| array_type / dict_type / table_type / tuple_type / fundamental_type opt? |}
 
 		tuple_type <- '(' ws {:types: {| tuple_elem+ |} :} ws {:kind: ')' -> 'tuple' :}
 		tuple_elem <- any_type ws ','? ws
 
 		dict_type <- '{' ws dict_key ws ':' ws dict_val ws  {:kind: '}' -> 'dict' :}
 		dict_key <- {:key: '[' ws any_type ws ']' :}
-		dict_val <- {:val: any_type :}
+		dict_val <- {:val: optional_type :}
 
 		table_type <- '{' ws {:fields: {| table_elem+ |} :} ws {:kind: '}' -> 'table' :}
-		table_elem <- {| {:key: ident :} ws ':' ws {:val: any_type :} |} ws ','? ws
+		table_elem <- {| {:key: ident :} ws ':' ws {:val: optional_type :} |} ws ','? ws
 
 		array_type <-  {:kind: '[]' -> 'array' :} {:type: any_type :}
 
@@ -192,7 +252,31 @@ function M.parse(kitty)
 		return false, 'Cannot parse kitty\'s grammar.'
 	end
 
-	return true, remove_duplicates(matches) --[=[@as cpp-tools.luakittens.Matches ]=]
+	return true, matches --[=[@as cpp-tools.luakittens.Matches ]=]
+end
+
+---Parses a type annotation with a grammar similar to that of luaCATS - luaKITTENS
+---
+---The differences are:
+---	- only `nil`, `any`, `string`, `number`, (`function`/`fn`), (`boolean`/`bool`), `table` fundamental types are supported
+--- - no support for function types (only `function` or `fn` are allowed)
+--- - booleans can be typed both as `bool` and `boolean`
+--- - arrays use the `[]type` syntax instead of `type[]`
+--- - tuples use `()` instead of `[]`
+--- - the key-value table syntax (`table<T, U>`) is not supported, instead only the dict version exists - `{ [T]: U }`
+--- - the syntax is more restrictive, the following things are not allowed:
+--- 	- `nil?` - an optional type already means `T|nil`, `nil|nil` doesn't make sense
+---
+---@param kitty cpp-tools.luakittens.Kitten a luaKITTEN definition
+---@return boolean, string|cpp-tools.luakittens.Matches
+function M.parse(kitty)
+	local ok, matches = only_parse(kitty)
+
+	if not ok then
+		return ok, matches
+	end
+
+	return ok, normalize(remove_duplicates(matches --[=[@as cpp-tools.luakittens.Matches ]=]))
 end
 
 ---@package
@@ -200,27 +284,11 @@ function M.__test()
 	assert:set_parameter('TableFormatLevel', 10)
 
 	local fp = require('cpp-tools.lib.fp')
-	local parse = fp.chain(M.parse, fp.second)
-
-	local fund = function(t)
-		return { kind = 'fundamental', type = t }
-	end
-	local arr = function(t)
-		return { kind = 'array', type = t }
-	end
-	local tup = function(...)
-		return { kind = 'tuple', types = { ... } }
-	end
-	local dict = function(k, v)
-		return { kind = 'dict', key = k, val = v }
-	end
-	local field = function(k, v)
-		return { key = k, val = v }
-	end
+	local parse = fp.chain(only_parse, fp.second)
 
 	describe('`parse()`', function()
 		it('Parses single fundamental types', function()
-			assert.is.falsy(M.parse('foo'))
+			assert.is.falsy(only_parse('foo'))
 
 			assert.are.same({ fund('string') }, parse('string'))
 			assert.are.same({ fund('number') }, parse('number'))
@@ -238,16 +306,16 @@ function M.__test()
 
 			assert.are.same({ arr(arr(fund('string'))) }, parse('[][]string'))
 
-			assert.is.falsy(M.parse('string[]'))
+			assert.is.falsy(only_parse('string[]'))
 		end)
 
 		it('Parses tuples', function()
-			assert.are.same({ tup(fund('string')) }, parse('(string)'))
+			assert.are.same({ tuple(fund('string')) }, parse('(string)'))
 
-			assert.are.same({ tup(fund('string'), fund('number')) }, parse('(string, number)'))
+			assert.are.same({ tuple(fund('string'), fund('number')) }, parse('(string, number)'))
 
 			assert.are.same(
-				{ tup(fund('string'), arr(fund('number')), tup(arr(tup(fund('fn'))), fund('bool'))) },
+				{ tuple(fund('string'), arr(fund('number')), tuple(arr(tuple(fund('fn'))), fund('bool'))) },
 				parse('(string, []number, ([](fn), bool))')
 			)
 		end)
@@ -259,7 +327,7 @@ function M.__test()
 				{
 					dict(
 						dict(fund('string'), arr(fund('fn'))),
-						tup(dict(fund('bool'), fund('bool')), arr(dict(fund('fn'), fund('fn'))))
+						tuple(dict(fund('bool'), fund('bool')), arr(dict(fund('fn'), fund('fn'))))
 					),
 				},
 				parse([=[
@@ -320,19 +388,19 @@ function M.__test()
 				},
 			}, parse([[{ a: number, "b,c,kurwa": string  }]]))
 
-			assert.are.same({ tup(fund('string')) }, parse('(string,)'))
+			assert.are.same({ tuple(fund('string')) }, parse('(string,)'))
 
-			assert.are.same({ tup(fund('string'), fund('number')) }, parse('(string, number,)'))
+			assert.are.same({ tuple(fund('string'), fund('number')) }, parse('(string, number,)'))
 		end)
 
 		it('Nil type cannot be optional', function()
 			assert.are.same({ fund('nil') }, parse('nil'))
-			assert.is.falsy(M.parse('nil?'))
+			assert.is.falsy(only_parse('nil?'))
 		end)
 
 		it('Alternative is properly parsed', function()
 			assert.are.same(
-				{ fund('nil'), arr(fund('string')), tup(fund('string'), fund('number')) },
+				{ fund('nil'), arr(fund('string')), tuple(fund('string'), fund('number')) },
 				parse('nil|[]string|(string, number)')
 			)
 		end)
@@ -351,6 +419,41 @@ function M.__test()
 			assert.are.same(parse('string?'), remove_duplicates(parse('string?|string')))
 
 			assert.are.same(parse('string?'), remove_duplicates(parse('string|string?')))
+		end)
+	end)
+
+	-- TODO:
+	-- TODO: Make alternative work inside complex types lmao
+	-- TODO:
+	describe('`normalize()`', function()
+		it('Leaves out normal types', function()
+			local ast = parse('string')
+			assert.are.same(ast, normalize(ast))
+
+			ast = parse('string|(number, string)|{ "lampa jak skurwysyn": []fn }')
+			assert.are.same(ast, normalize(ast))
+
+			ast = parse('any')
+			assert.are.same(ast, normalize(ast))
+
+			ast = parse('nil')
+			assert.are.same(ast, normalize(ast))
+		end)
+
+		it('Turns `T|nil` into `T?`', function()
+			local ast = { make_opt(fund('string')) }
+			assert.are.same(ast, normalize(parse('string|nil')))
+			assert.are.same(ast, normalize(parse('nil|string')))
+		end)
+
+		it('Turns `T|U|...|any` into `any`', function()
+			local ast = { fund('any') }
+			assert.are.same(ast, normalize(parse('string|(fn, bool, any)|any')))
+		end)
+
+		it('Turns `T|U|...|any|nil` into `any?`', function()
+			local ast = { make_opt(fund('any')) }
+			assert.are.same(ast, normalize(parse('string|(fn, bool, any)|any|nil')))
 		end)
 	end)
 end
