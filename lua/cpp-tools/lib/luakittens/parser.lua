@@ -38,15 +38,22 @@ local Typename = {
 	Bool = 'bool',
 }
 
----@class cpp-tools.luakittens.AnyType
----@field [1] cpp-tools.luakittens.Array|cpp-tools.luakittens.Fundamental|cpp-tools.luakittens.Table|cpp-tools.luakittens.Tuple|cpp-tools.luakittens.Dict
+---@alias cpp-tools.luakittens.PossibleOptionalType cpp-tools.luakittens.Array|cpp-tools.luakittens.Fundamental|cpp-tools.luakittens.Table|cpp-tools.luakittens.Tuple|cpp-tools.luakittens.Dict
 
----@class (exact) cpp-tools.luakittens.Type : cpp-tools.luakittens.AnyType
+---@class cpp-tools.luakittens.Type
+---@field [1] cpp-tools.luakittens.OptionalType | cpp-tools.luakittens.Nil
+
+---@class (exact) cpp-tools.luakittens.OptionalType : cpp-tools.luakittens.Type
+---@field [1] cpp-tools.luakittens.PossibleOptionalType
 ---@field opt string?
 
 ---@class (exact) cpp-tools.luakittens.Fundamental
----@field kind cpp-tools.luakittens.TypeKind.Fundamental The kind of the type
----@field type cpp-tools.luakittens.Typename The exact type, this includes all basic lua types except thread, userdata and `boolean` is changed to `bool`
+---@field kind cpp-tools.luakittens.TypeKind.Fundamental
+---@field type cpp-tools.luakittens.Typename
+---
+---@class (exact) cpp-tools.luakittens.Nil
+---@field kind cpp-tools.luakittens.TypeKind.Fundamental
+---@field type cpp-tools.luakittens.Typename.Nil
 
 ---@class (exact) cpp-tools.luakittens.Array
 ---@field kind cpp-tools.luakittens.TypeKind.Array
@@ -62,13 +69,12 @@ local Typename = {
 
 ---@class (exact) cpp-tools.luakittens.Tuple
 ---@field kind cpp-tools.luakittens.TypeKind.Tuple
----@field types cpp-tools.luakittens.TableElem[]
+---@field types cpp-tools.luakittens.Type[]
 
 ---@class (exact) cpp-tools.luakittens.Dict
 ---@field kind cpp-tools.luakittens.TypeKind.Dict
 ---@field key cpp-tools.luakittens.Type
 ---@field val cpp-tools.luakittens.Type
----@field opt string?
 
 --------------------------------------------------
 -- End Types
@@ -85,7 +91,6 @@ local Typename = {
 --- - the key-value table syntax (`table<T, U>`) is not supported, instead only the dict version exists - `{ [T]: U }`
 --- - the syntax is more restrictive, the following things are not allowed, because they're illogical:
 --- 	- `nil?` - an optional type already means `T|nil`, `nil|nil` doesn't make sense
---- 	- `T|U|T|...` - the syntax disallows specifying the same type twice ( TODO:)
 ---
 ---@param kitty cpp-tools.luakittens.Kitten a luaKITTEN definition
 ---@return boolean, string|cpp-tools.luakittens.Type[]
