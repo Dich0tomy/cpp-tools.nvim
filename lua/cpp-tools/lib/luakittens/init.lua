@@ -100,15 +100,15 @@ function M.parse(kitty)
 
     any_type <- {| array_type / dict_type / table_type / tuple_type / fundamental_type opt? |}
 
-    tuple_type <- '(' ws {:types: {| tuple_elem (ws ',' ws tuple_elem)* |} :} ws {:kind: ')' -> 'tuple' :}
-    tuple_elem <- any_type
+    tuple_type <- '(' ws {:types: {| tuple_elem+ |} :} ws {:kind: ')' -> 'tuple' :}
+    tuple_elem <- any_type ws ','? ws
 
     dict_type <- '{' ws dict_key ws ':' ws dict_val ws  {:kind: '}' -> 'dict' :}
     dict_key <- {:key: '[' ws any_type ws ']' :}
     dict_val <- {:val: any_type :}
 
-    table_type <- '{' ws {:fields: {| table_elem (ws ',' ws table_elem)* |} :} ws {:kind: '}' -> 'table' :}
-    table_elem <- {| {:key: ident :} ws ':' ws {:val: any_type :} |}
+    table_type <- '{' ws {:fields: {| table_elem+ |} :} ws {:kind: '}' -> 'table' :}
+    table_elem <- {| {:key: ident :} ws ':' ws {:val: any_type :} |} ws ','? ws
 
     array_type <-  {:kind: '[]' -> 'array' :} {:type: any_type :}
 
@@ -239,6 +239,27 @@ function M.__test()
 				}
 				]])
 			)
+		end)
+
+		it('Allows for trailing commas', function()
+			assert.are.same({
+				kind = 'table',
+				fields = {
+					field('a', fund('number')),
+				},
+			}, parse('{ a: number, }'))
+
+			assert.are.same({
+				kind = 'table',
+				fields = {
+					field('a', fund('number')),
+					field('b,c,kurwa', fund('string')),
+				},
+			}, parse([[{ a: number, "b,c,kurwa": string  }]]))
+
+			assert.are.same(tup(fund('string')), parse('(string,)'))
+
+			assert.are.same(tup(fund('string'), fund('number')), parse('(string, number,)'))
 		end)
 	end)
 end
