@@ -76,6 +76,8 @@ local Typename = {
 ---@field key cpp-tools.luakittens.Type
 ---@field val cpp-tools.luakittens.Type
 
+---@alias cpp-tools.luakittens.Matches cpp-tools.luakittens.Type[]
+
 --------------------------------------------------
 -- End Types
 --------------------------------------------------
@@ -93,7 +95,7 @@ local Typename = {
 --- 	- `nil?` - an optional type already means `T|nil`, `nil|nil` doesn't make sense
 ---
 ---@param kitty cpp-tools.luakittens.Kitten a luaKITTEN definition
----@return boolean, string|cpp-tools.luakittens.Type[]
+---@return boolean, string|cpp-tools.luakittens.Matches
 function M.parse(kitty)
 	local grammar = [==[
 		grammar <- ws alternative_type ws eof
@@ -138,13 +140,13 @@ function M.parse(kitty)
 
 	local pattern = vim.re.compile(grammar)
 
-	local matches = pattern:match(kitty)
+	local matches = { pattern:match(kitty) }
 
-	if not matches then
+	if not matches or vim.tbl_isempty(matches) then
 		return false, 'Cannot parse kitty\'s grammar.'
 	end
 
-	return true, matches --[=[@as cpp-tools.luakittens.Type[] ]=]
+	return true, matches --[=[@as cpp-tools.luakittens.Matches ]=]
 end
 
 ---@package
@@ -174,44 +176,46 @@ function M.__test()
 		it('Parses single fundamental types', function()
 			assert.is.falsy(M.parse('foo'))
 
-			assert.are.same(fund('string'), parse('string'))
-			assert.are.same(fund('number'), parse('number'))
-			assert.are.same(fund('nil'), parse('nil'))
-			assert.are.same(fund('any'), parse('any'))
+			assert.are.same({ fund('string') }, parse('string'))
+			assert.are.same({ fund('number') }, parse('number'))
+			assert.are.same({ fund('nil') }, parse('nil'))
+			assert.are.same({ fund('any') }, parse('any'))
 
-			assert.are.same(fund('fn'), parse('fn'))
-			assert.are.same(fund('fn'), parse('function'))
-			assert.are.same(fund('bool'), parse('bool'))
-			assert.are.same(fund('bool'), parse('boolean'))
+			assert.are.same({ fund('fn') }, parse('fn'))
+			assert.are.same({ fund('fn') }, parse('function'))
+			assert.are.same({ fund('bool') }, parse('bool'))
+			assert.are.same({ fund('bool') }, parse('boolean'))
 		end)
 
 		it('Parses arrays', function()
-			assert.are.same(arr(fund('string')), parse('[]string'))
+			assert.are.same({ arr(fund('string')) }, parse('[]string'))
 
-			assert.are.same(arr(arr(fund('string'))), parse('[][]string'))
+			assert.are.same({ arr(arr(fund('string'))) }, parse('[][]string'))
 
 			assert.is.falsy(M.parse('string[]'))
 		end)
 
 		it('Parses tuples', function()
-			assert.are.same(tup(fund('string')), parse('(string)'))
+			assert.are.same({ tup(fund('string')) }, parse('(string)'))
 
-			assert.are.same(tup(fund('string'), fund('number')), parse('(string, number)'))
+			assert.are.same({ tup(fund('string'), fund('number')) }, parse('(string, number)'))
 
 			assert.are.same(
-				tup(fund('string'), arr(fund('number')), tup(arr(tup(fund('fn'))), fund('bool'))),
+				{ tup(fund('string'), arr(fund('number')), tup(arr(tup(fund('fn'))), fund('bool'))) },
 				parse('(string, []number, ([](fn), bool))')
 			)
 		end)
 
 		it('Parses dicts', function()
-			assert.are.same(dict(fund('string'), fund('fn')), parse('{ [string]: fn }'))
+			assert.are.same({ dict(fund('string'), fund('fn')) }, parse('{ [string]: fn }'))
 
 			assert.are.same(
-				dict(
-					dict(fund('string'), arr(fund('fn'))),
-					tup(dict(fund('bool'), fund('bool')), arr(dict(fund('fn'), fund('fn'))))
-				),
+				{
+					dict(
+						dict(fund('string'), arr(fund('fn'))),
+						tup(dict(fund('bool'), fund('bool')), arr(dict(fund('fn'), fund('fn'))))
+					),
+				},
 				parse([=[
 				{
 					[{ [string]: []fn }]:
@@ -223,18 +227,22 @@ function M.__test()
 
 		it('Parses tables', function()
 			assert.are.same({
-				kind = 'table',
-				fields = {
-					field('foo', fund('fn')),
+				{
+					kind = 'table',
+					fields = {
+						field('foo', fund('fn')),
+					},
 				},
 			}, parse('{ foo: fn }'))
 
 			assert.are.same(
 				{
-					kind = 'table',
-					fields = {
-						field('siema n k o ', fund('fn')),
-						field('{ "siema n k o ": fn }', arr(fund('bool'))),
+					{
+						kind = 'table',
+						fields = {
+							field('siema n k o ', fund('fn')),
+							field('{ "siema n k o ": fn }', arr(fund('bool'))),
+						},
 					},
 				},
 				parse([[
@@ -248,28 +256,39 @@ function M.__test()
 
 		it('Allows for trailing commas', function()
 			assert.are.same({
-				kind = 'table',
-				fields = {
-					field('a', fund('number')),
+				{
+					kind = 'table',
+					fields = {
+						field('a', fund('number')),
+					},
 				},
 			}, parse('{ a: number, }'))
 
 			assert.are.same({
-				kind = 'table',
-				fields = {
-					field('a', fund('number')),
-					field('b,c,kurwa', fund('string')),
+				{
+					kind = 'table',
+					fields = {
+						field('a', fund('number')),
+						field('b,c,kurwa', fund('string')),
+					},
 				},
 			}, parse([[{ a: number, "b,c,kurwa": string  }]]))
 
-			assert.are.same(tup(fund('string')), parse('(string,)'))
+			assert.are.same({ tup(fund('string')) }, parse('(string,)'))
 
-			assert.are.same(tup(fund('string'), fund('number')), parse('(string, number,)'))
+			assert.are.same({ tup(fund('string'), fund('number')) }, parse('(string, number,)'))
 		end)
 
 		it('Nil type cannot be optional', function()
-			assert.are.same(fund('nil'), parse('nil'))
+			assert.are.same({ fund('nil') }, parse('nil'))
 			assert.is.falsy(M.parse('nil?'))
+		end)
+
+		it('Alternative is properly parsed', function()
+			assert.are.same(
+				{ fund('nil'), arr(fund('string')), tup(fund('string'), fund('number')) },
+				parse('nil|[]string|(string, number)')
+			)
 		end)
 	end)
 end
