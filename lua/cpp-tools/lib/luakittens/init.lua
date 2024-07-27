@@ -90,46 +90,46 @@ local Typename = {
 ---@param kitty cpp-tools.luakittens.Kitten a luaKITTEN definition
 ---@return boolean, string|cpp-tools.luakittens.Type[]
 function M.parse(kitty)
-	-- TODO: It doesn't make sense to have an optional nil, make it impossible to make in grammar
-	-- TODO: Make trailing commas allowed
-
 	local grammar = [==[
-    grammar <- ws alternative_type ws eof
+		grammar <- ws alternative_type ws eof
 
-    alternative_type <- any_type (ws '|' ws alternative_type )*
+		alternative_type <- any_type ws ('|' ws alternative_type )*
 
-    any_type <- {| array_type / dict_type / table_type / tuple_type / fundamental_type opt? |}
+		any_type <- {| optional_type / nil_type |}
+		optional_type <- array_type / dict_type / table_type / tuple_type / fundamental_type opt?
 
-    tuple_type <- '(' ws {:types: {| tuple_elem+ |} :} ws {:kind: ')' -> 'tuple' :}
-    tuple_elem <- any_type ws ','? ws
+		tuple_type <- '(' ws {:types: {| tuple_elem+ |} :} ws {:kind: ')' -> 'tuple' :}
+		tuple_elem <- any_type ws ','? ws
 
-    dict_type <- '{' ws dict_key ws ':' ws dict_val ws  {:kind: '}' -> 'dict' :}
-    dict_key <- {:key: '[' ws any_type ws ']' :}
-    dict_val <- {:val: any_type :}
+		dict_type <- '{' ws dict_key ws ':' ws dict_val ws  {:kind: '}' -> 'dict' :}
+		dict_key <- {:key: '[' ws any_type ws ']' :}
+		dict_val <- {:val: any_type :}
 
-    table_type <- '{' ws {:fields: {| table_elem+ |} :} ws {:kind: '}' -> 'table' :}
-    table_elem <- {| {:key: ident :} ws ':' ws {:val: any_type :} |} ws ','? ws
+		table_type <- '{' ws {:fields: {| table_elem+ |} :} ws {:kind: '}' -> 'table' :}
+		table_elem <- {| {:key: ident :} ws ':' ws {:val: any_type :} |} ws ','? ws
 
-    array_type <-  {:kind: '[]' -> 'array' :} {:type: any_type :}
+		array_type <-  {:kind: '[]' -> 'array' :} {:type: any_type :}
 
-    fundamental_type <- {:type: typename :} {:kind: '' -> 'fundamental' :}
+		fundamental_type <- {:type: typename :} {:kind: '' -> 'fundamental' :}
 
-    typename <- 'nil' / 'any' / 'string' / 'number' / 'table' / function_typename / boolean_typename
-    boolean_typename <- {~ ('boolean' / 'bool') -> 'bool' ~}
-    function_typename <- {~ ('function' / 'fn') -> 'fn' ~}
+		nil_type <- {:type: 'nil' :} {:kind: '' -> 'fundamental' :}
 
-    opt <- {:opt: '?' :}
+		typename <- 'any' / 'string' / 'number' / 'table' / function_typename / boolean_typename
+		boolean_typename <- {~ ('boolean' / 'bool') -> 'bool' ~}
+		function_typename <- {~ ('function' / 'fn') -> 'fn' ~}
 
-    ident <- escaped_ident / basic_ident
+		opt <- {:opt: '?' :}
 
-    basic_ident <- [a-zA-Z_][a-zA-Z0-9_]*
-    escaped_ident <- {:used_quote: quote :} { (!(=used_quote) .)+ } =used_quote
+		ident <- escaped_ident / basic_ident
 
-    quote <- "'" / '"'
+		basic_ident <- [a-zA-Z_][a-zA-Z0-9_]*
+		escaped_ident <- {:used_quote: quote :} { (!(=used_quote) .)+ } =used_quote
 
-    eof <- !.
-    ws <- %s*
-  ]==]
+		quote <- "'" / '"'
+
+		eof <- !.
+		ws <- %s*
+	]==]
 
 	local pattern = vim.re.compile(grammar)
 
@@ -260,6 +260,11 @@ function M.__test()
 			assert.are.same(tup(fund('string')), parse('(string,)'))
 
 			assert.are.same(tup(fund('string'), fund('number')), parse('(string, number,)'))
+		end)
+
+		it('Nil type cannot be optional', function()
+			assert.are.same(fund('nil'), parse('nil'))
+			assert.is.falsy(M.parse('nil?'))
 		end)
 	end)
 end
