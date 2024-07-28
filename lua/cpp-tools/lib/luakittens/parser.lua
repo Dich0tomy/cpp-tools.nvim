@@ -175,7 +175,7 @@ local function only_parse(kitty)
 		tuple_elem <- any_type ws ','? ws
 
 		dict_type <- '{' ws dict_key ws ':' ws dict_val ws  {:kind: '}' -> 'dict' :}
-		dict_key <- {:key: '[' ws any_type ws ']' :}
+		dict_key <- {:key: '[' ws optional_type ws ']' :}
 		dict_val <- {:val: optional_type :}
 
 		table_type <- '{' ws {:fields: {| table_elem+ |} :} ws {:kind: '}' -> 'table' :}
@@ -345,6 +345,11 @@ function M.__test()
 
 		it('Nil is prohibited in dict', function()
 			assert.are.falsy(only_parse('{ [string]: nil }'))
+			assert.are.falsy(only_parse('{ [nil]: string }'))
+		end)
+
+		it('Nil is prohibited in table', function()
+			assert.are.falsy(only_parse('{ foo: nil }'))
 		end)
 
 		it('Nil is prohibited in table', function()
@@ -368,9 +373,6 @@ function M.__test()
 		end)
 	end)
 
-	-- TODO:
-	-- TODO: Make alternative work inside complex types lmao
-	-- TODO:
 	describe('`normalize()`', function()
 		it('Leaves out normal types', function()
 			local ast = parse('string')
