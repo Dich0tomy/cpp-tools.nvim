@@ -28,46 +28,6 @@ local Typename = {
 	Bool = 'bool',
 }
 
----@alias cpp-tools.luakittens.PossibleOptionalType cpp-tools.luakittens.Array|cpp-tools.luakittens.Fundamental|cpp-tools.luakittens.Table|cpp-tools.luakittens.Tuple|cpp-tools.luakittens.Dict
-
----@class cpp-tools.luakittens.Type
----@field [1] cpp-tools.luakittens.OptionalType | cpp-tools.luakittens.Nil
-
----@class (exact) cpp-tools.luakittens.OptionalType : cpp-tools.luakittens.Type
----@field [1] cpp-tools.luakittens.PossibleOptionalType
----@field opt string?
-
----@class (exact) cpp-tools.luakittens.Fundamental
----@field kind cpp-tools.luakittens.TypeKind.Fundamental
----@field type cpp-tools.luakittens.Typename
----
----@class (exact) cpp-tools.luakittens.Nil
----@field kind cpp-tools.luakittens.TypeKind.Fundamental
----@field type cpp-tools.luakittens.Typename.Nil
-
----@class (exact) cpp-tools.luakittens.Array
----@field kind cpp-tools.luakittens.TypeKind.Array
----@field type cpp-tools.luakittens.Type
-
----@class (exact) cpp-tools.luakittens.TableElem
----@field key string
----@field val cpp-tools.luakittens.Type
-
----@class (exact) cpp-tools.luakittens.Table
----@field kind cpp-tools.luakittens.TypeKind.Table
----@field fields cpp-tools.luakittens.TableElem[]
-
----@class (exact) cpp-tools.luakittens.Tuple
----@field kind cpp-tools.luakittens.TypeKind.Tuple
----@field types cpp-tools.luakittens.Type[]
-
----@class (exact) cpp-tools.luakittens.Dict
----@field kind cpp-tools.luakittens.TypeKind.Dict
----@field key cpp-tools.luakittens.Type
----@field val cpp-tools.luakittens.Type
-
----@alias cpp-tools.luakittens.Matches cpp-tools.luakittens.Type[]
-
 --------------------------------------------------
 -- End Types
 --------------------------------------------------
@@ -102,7 +62,6 @@ end
 
 --- Adds `opt = '?'` into the type, thus marking it as optional
 ---
----@param type cpp-tools.luakittens.Type
 local function make_opt(type)
 	type.opt = '?'
 	return type
@@ -116,7 +75,6 @@ end
 --- - `T|nil` -> `foo?`
 --- - `T|U|...|any` -> `any`
 ---
----@param matches cpp-tools.luakittens.Matches
 local function normalize(matches)
 	local nil_idx = nil
 	local has_nil = vim.iter(ipairs(matches)):any(function(i, m)
@@ -152,7 +110,6 @@ end
 ---In the case of two types in which one is optional and the other isn't, the one that isn't optional is removed,
 ---as `T|T?` actually means `T|T|nil`.
 ---
----@param matches cpp-tools.luakittens.Matches
 local function remove_duplicates(matches)
 	local iter = require('cpp-tools.lib.iter')
 
@@ -204,7 +161,7 @@ end
 --- 	- `nil?` - an optional type already means `T|nil`, `nil|nil` doesn't make sense
 ---
 ---@param kitty cpp-tools.luakittens.Kitten a luaKITTEN definition
----@return boolean, string|cpp-tools.luakittens.Matches
+---@return boolean, string|table
 local function only_parse(kitty)
 	local grammar = [==[
 		grammar <- ws alternative_type ws eof
@@ -255,7 +212,7 @@ local function only_parse(kitty)
 		return false, 'Cannot parse kitty\'s grammar.'
 	end
 
-	return true, matches --[=[@as cpp-tools.luakittens.Matches ]=]
+	return true, matches
 end
 
 ---Parses a type annotation with a grammar similar to that of luaCATS - luaKITTENS
@@ -271,7 +228,7 @@ end
 --- 	- `nil?` - an optional type already means `T|nil`, `nil|nil` doesn't make sense
 ---
 ---@param kitty cpp-tools.luakittens.Kitten a luaKITTEN definition
----@return boolean, string|cpp-tools.luakittens.Matches
+---@return boolean, string|table
 function M.parse(kitty)
 	local ok, matches = only_parse(kitty)
 
@@ -279,7 +236,7 @@ function M.parse(kitty)
 		return ok, matches
 	end
 
-	return ok, normalize(remove_duplicates(matches --[=[@as cpp-tools.luakittens.Matches ]=]))
+	return ok, normalize(remove_duplicates(matches))
 end
 
 ---@package
