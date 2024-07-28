@@ -48,64 +48,75 @@ function M.arrays_equal(arr1, arr2)
 	return true
 end
 
-function M.__test()
-	describe('array_equals', function()
-		local iter = require('lua.cpp-tools.lib.iter.init')
+---Partitions the given range into one satisfying the pred and one not satisfying the pred
+---@generic T
+---@param range [`T`] The range to partition
+---@param pred fun(T): boolean The predicate by which to partition
+---@return [T] # [T] satisfying the predicate
+---@return [T] # [T] not satisfying the predicate
+function M.partition(range, pred, proj_beg)
+	local fp = require('cpp-tools.lib.fp')
+	proj_beg = fp.maybe_fn(proj_beg)
 
+	return vim.iter(range):map(proj_beg):filter(pred):totable() or {},
+		vim.iter(range):map(proj_beg):filter(fp.nah(pred)):totable() or {}
+end
+
+---@package
+function M.__test()
+	describe('`array_equals()`', function()
 		it('Two same references to empty are equal', function()
 			local empty = {}
 			local a = empty
 			local b = empty
 
-			assert.is.truthy(iter.arrays_equal(a, b))
+			assert.is.truthy(M.arrays_equal(a, b))
 		end)
 
 		it('Two different references to empty are equal', function()
 			local a = {}
 			local b = {}
 
-			assert.is.truthy(iter.arrays_equal(a, b))
+			assert.is.truthy(M.arrays_equal(a, b))
 		end)
 
 		it('Two same values are equal', function()
 			local a = { 1, 2 }
 			local b = { 1, 2 }
 
-			assert.is.truthy(iter.arrays_equal(a, b))
+			assert.is.truthy(M.arrays_equal(a, b))
 		end)
 
 		it('Two same values with different order are not equal', function()
 			local a = { 1, 2 }
 			local b = { 2, 1 }
 
-			assert.is.falsy(iter.arrays_equal(a, b))
+			assert.is.falsy(M.arrays_equal(a, b))
 		end)
 
 		it('Two same values with different values', function()
 			local a = { '' }
 			local b = { 1 }
 
-			assert.is.falsy(iter.arrays_equal(a, b))
+			assert.is.falsy(M.arrays_equal(a, b))
 		end)
 	end)
 
-	describe('line_count', function()
-		local iter = require('lua.cpp-tools.lib.iter.init')
-
+	describe('`line_count()`', function()
 		it('Returns 1 for an empty string', function()
-			assert.are.equal(iter.line_count(''), 1)
+			assert.are.equal(M.line_count(''), 1)
 		end)
 
 		it('Returns 1 for a non empty string with one line', function()
-			assert.are.equal(iter.line_count('Hello there'), 1)
+			assert.are.equal(M.line_count('Hello there'), 1)
 		end)
 
 		it('Returns 1 for a string with a trailing newlien', function()
-			assert.are.equal(iter.line_count('Foo\n'), 1)
+			assert.are.equal(M.line_count('Foo\n'), 1)
 		end)
 
 		it('Returns 2 for a string with a trailing newline and content after it', function()
-			assert.are.equal(iter.line_count('Foo\nBar'), 2)
+			assert.are.equal(M.line_count('Foo\nBar'), 2)
 		end)
 
 		it('Returns X for a string with X lines (ignoring last newline)', function()
@@ -114,16 +125,14 @@ function M.__test()
 			second line
 			third line]]
 
-			assert.are.equal(iter.line_count(three_lined_string), 3)
+			assert.are.equal(M.line_count(three_lined_string), 3)
 		end)
 	end)
 
-	describe('lines', function()
-		local iter = require('lua.cpp-tools.lib.iter.init')
-
+	describe('`lines()`', function()
 		it('Returns one empty line untouched', function()
 			local empty_line = ''
-			local lines = iter.lines(empty_line)
+			local lines = M.lines(empty_line)
 
 			assert.are.equal(#lines, 1)
 			assert.are.equal(lines[1], empty_line)
@@ -131,7 +140,7 @@ function M.__test()
 
 		it('Returns one non empty line untouched', function()
 			local empty_line = 'asdasdasdasdasd'
-			local lines = iter.lines(empty_line)
+			local lines = M.lines(empty_line)
 
 			assert.are.equal(#lines, 1)
 			assert.are.equal(lines[1], empty_line)
@@ -141,7 +150,51 @@ function M.__test()
 			local lines_arr = { 'line1', 'line2', 'line3' }
 			local lines_str = vim.fn.join(lines_arr, '\n')
 
-			assert.is.truthy(iter.arrays_equal(iter.lines(lines_str), lines_arr))
+			assert.is.truthy(M.arrays_equal(M.lines(lines_str), lines_arr))
+		end)
+	end)
+
+	describe('`partition()`', function()
+		it('Partitions all left', function()
+			local arr = { 1, 2, 3, 4, 5, 6, 7, 8 }
+			local good, bad = M.partition(arr, function()
+				return true
+			end)
+
+			assert.are.same(good, arr)
+			assert.are.same(bad, {})
+		end)
+
+		it('Partitions all right', function()
+			local arr = { 1, 2, 3, 4, 5, 6, 7, 8 }
+			local good, bad = M.partition(arr, function()
+				return false
+			end)
+
+			assert.are.same(good, {})
+			assert.are.same(bad, arr)
+		end)
+
+		it('Partitions both sides', function()
+			local arr = { 1, 2, 3, 4, 5, 6, 7, 8 }
+			local good, bad = M.partition(arr, function(n)
+				return n % 2 == 0
+			end)
+
+			assert.are.same(good, { 2, 4, 6, 8 })
+			assert.are.same(bad, { 1, 3, 5, 7 })
+		end)
+
+		it('Applies the projection properly', function()
+			local arr = { 1, 2, 3, 4, 5, 6, 7, 8 }
+			local good, bad = M.partition(arr, function(n)
+				return n < 10
+			end, function(n)
+				return n * 2
+			end)
+
+			assert.are.same(good, { 2, 4, 6, 8 })
+			assert.are.same(bad, { 10, 12, 14, 16 })
 		end)
 	end)
 end
