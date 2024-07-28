@@ -4,6 +4,17 @@ local M = {}
 -- Types
 --------------------------------------------------
 
+--[[
+
+This is a very basic implementation, but I will rewrite the parsing to use a handwritten parser
+because the lpeg re implementation isn't sufficient and doesn't allow for any remotely useful diagnostics.
+
+The current implementation lacks the ability to express alternative types in complex types.
+The blocker is that with this lpeg parser it's impossible to not make things like `[]string|number` ambiguous
+(this gets parsed as `[](string|number)`).
+
+]]
+
 ---@alias cpp-tools.luakittens.Kitten string
 
 ---@package
