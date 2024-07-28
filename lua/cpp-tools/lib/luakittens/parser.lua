@@ -198,7 +198,6 @@ end
 --- - the key-value table syntax (`table<T, U>`) is not supported, instead only the dict version exists - `{ [T]: U }`
 --- - the syntax is more restrictive, the following things are not allowed:
 --- 	- `nil?` - an optional type already means `T|nil`, `nil|nil` doesn't make sense
---- 	- TODO: specifying `nil` as a key to a table/dict - in lua that means deleting a key from a table
 ---
 ---@param kitty cpp-tools.luakittens.Kitten a luaKITTEN definition
 ---@return boolean, string|cpp-tools.luakittens.Matches
@@ -403,6 +402,14 @@ function M.__test()
 				{ fund('nil'), arr(fund('string')), tuple(fund('string'), fund('number')) },
 				parse('nil|[]string|(string, number)')
 			)
+		end)
+
+		it('Nil is prohibited in dict', function()
+			assert.are.falsy(only_parse('{ [string]: nil }'))
+		end)
+
+		it('Nil is prohibited in table', function()
+			assert.are.falsy(only_parse('{ foo: nil }'))
 		end)
 	end)
 
