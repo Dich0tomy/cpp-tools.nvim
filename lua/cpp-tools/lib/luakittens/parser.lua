@@ -96,6 +96,10 @@ local function field(k, v)
 	return { key = k, val = v }
 end
 
+local function tab(...)
+	return { kind = 'table', fields = { ... } }
+end
+
 --- Adds `opt = '?'` into the type, thus marking it as optional
 ---
 ---@param type cpp-tools.luakittens.Type
@@ -340,23 +344,12 @@ function M.__test()
 
 		it('Parses tables', function()
 			assert.are.same({
-				{
-					kind = 'table',
-					fields = {
-						field('foo', fund('fn')),
-					},
-				},
+				tab(field('foo', fund('fn'))),
 			}, parse('{ foo: fn }'))
 
 			assert.are.same(
 				{
-					{
-						kind = 'table',
-						fields = {
-							field('siema n k o ', fund('fn')),
-							field('{ "siema n k o ": fn }', arr(fund('bool'))),
-						},
-					},
+					tab(field('siema n k o ', fund('fn')), field('{ "siema n k o ": fn }', arr(fund('bool')))),
 				},
 				parse([[
 				{
@@ -369,22 +362,11 @@ function M.__test()
 
 		it('Allows for trailing commas', function()
 			assert.are.same({
-				{
-					kind = 'table',
-					fields = {
-						field('a', fund('number')),
-					},
-				},
+				tab(field('a', fund('number'))),
 			}, parse('{ a: number, }'))
 
 			assert.are.same({
-				{
-					kind = 'table',
-					fields = {
-						field('a', fund('number')),
-						field('b,c,kurwa', fund('string')),
-					},
-				},
+				tab(field('a', fund('number')), field('b,c,kurwa', fund('string'))),
 			}, parse([[{ a: number, "b,c,kurwa": string  }]]))
 
 			assert.are.same({ tuple(fund('string')) }, parse('(string,)'))
