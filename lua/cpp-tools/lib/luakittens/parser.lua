@@ -289,7 +289,7 @@ function M.__test()
 	local fp = require('cpp-tools.lib.fp')
 	local parse = fp.chain(only_parse, fp.second)
 
-	describe('`parse()`', function()
+	describe('`only_parse()`', function()
 		it('Parses single fundamental types', function()
 			assert.is.falsy(only_parse('foo'))
 
