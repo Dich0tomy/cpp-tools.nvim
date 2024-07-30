@@ -48,12 +48,12 @@ TODO: Possibly another implicit fields which allows disabling certain events, or
 ## Conventions
 
 1. The types are denoted after `:` and use the [luaKITTENS annotation system](#luaKITTENS).
-3. `^` denotes a required field, dependent on some condition (e.g. the `required` - `default` relation).
+2. `^` denotes a required field, dependent on some condition (e.g. the `required` - `default` relation).
 
 ## Types
 
 1. The `kitty` type refers to a `string` that's a valid `kitten`, that is a valid `luaKITTENS` annotation.
-1. The `EventName` type refers to a `string` that's a valid neovim event name, see `:h events`
+2. The `EventName` type refers to a `string` that's a valid neovim event name, see `:h events`
 
 ## Structure
 
@@ -92,7 +92,15 @@ Each valid cpp-tools module has the following structure:
 	This is the case for kickstart modules, which are loaded automatically.
 
 - **events**: `{ [EventName]: fn }` - The functions has to have the following signature: `fn(config, ctx): ModuleResult`
-	<!-- TODO: -->
+	`config` is the evaluated config for this function, `ctx` is the execution context, which currently consists of:
+	- **id**: `number` - Autocommand id
+	- **event**: `string` - Name of the triggered event
+	- **group**: `number` - Autocommand group id
+	- **match**: `string` - Expanded value of <amatch>
+	- **buf**: `number` - Expanded value of <abuf>
+	- **file**: `string` - Expanded value of <afile>
+	- **data**: `any` - Arbitrary data passed from `nvim_exec_autocmds()`
+
 - **init**: `fn` - A function called once at the beginning if the module is enabled and the user visited one of the filetypes once.
 
 # luaKITTENS
