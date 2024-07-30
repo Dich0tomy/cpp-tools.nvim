@@ -4,14 +4,15 @@
 
 * [Functional spec of cpp-tools.nvim](#functional-spec-of-cpp-toolsnvim)
 * [What is cpp-tools.nvim](#what-is-cpp-toolsnvim)
-  * [Main objectives](#main-objectives)
-  * [Installation](#installation)
-    * [Using Nix](#using-nix)
-    * [Using rocks.nvim](#using-rocksnvim)
-    * [Using lazy.nvim](#using-lazynvim)
-  * [Usage & configuration](#usage--configuration)
-  * [General info](#general-info)
+	* [Main objectives](#main-objectives)
+	* [Installation](#installation)
+		* [Using Nix](#using-nix)
+		* [Using rocks.nvim](#using-rocksnvim)
+		* [Using lazy.nvim](#using-lazynvim)
+	* [Usage & configuration](#usage--configuration)
+	* [General info](#general-info)
 * [Definitions](#definitions)
+* [Events](#events)
 * [Goals for *some* future release](#goals-for-some-future-release)
 * [Goals for this release](#goals-for-this-release)
 * [Goals for the **next** release](#goals-for-the-next-release)
@@ -97,6 +98,14 @@ vim.g.cpptools = {
 # Definitions
 
 ...
+
+# Events
+
+The plugin defines and responds to the following autocommand events:
+- `CppToolsProject` - Fires once some time after neovim is opened and the current working directory is detected
+	to be a C++ project. It is used by some modules to start some stuff that is useful outside of the listed filetypes,
+		for example starting a language server on startup, to provide global workspace symbols and such out of the box.
+		If you don't want a certain module to respond to this event, you can set the `disable_project_event` option to `true`.
 
 # Goals for *some* future release
 

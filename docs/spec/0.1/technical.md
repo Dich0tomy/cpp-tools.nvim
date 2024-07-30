@@ -39,12 +39,6 @@ then calls each of the test functions with the context.
 
 # The module system
 
-TODO: A `CppToolsProject` event, which will fire if neovim is opened up in a project directory.
-This is useful to already provide language intelligence features even if we're not in a c/c++ file yet.
-E.g. starting the lsp, to be able to use find references.
-
-TODO: Possibly another implicit fields which allows disabling certain events, or just the project event.
-
 ## Conventions
 
 1. The types are denoted after `:` and use the [luaKITTENS annotation system](#luaKITTENS).
@@ -87,6 +81,12 @@ Each valid cpp-tools module has the following structure:
 		- **required** - `false`
 		- **default** - `{ 'c', 'cpp' }`
 		- **description** - `The filetypes this module should be loaded on.`
+
+	- **disable_project_event**:
+		- **type** - `bool`
+		- **required** - `false`
+		- **default** - `false`
+		- **description** - `Whether to disable the project event. It is fired once when neovim starts and a valid C/C++ project is detected in cwdc. Useful for starting up stuff that provides code intelligence outside of the given filetypes, for example global workspace symbols.`
 
 	If any module writes their own config fields with the same names, they will not get overridden.
 	This is the case for kickstart modules, which are loaded automatically.
