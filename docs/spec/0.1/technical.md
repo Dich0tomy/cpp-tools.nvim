@@ -39,6 +39,8 @@ then calls each of the test functions with the context.
 
 # The module system
 
+TODO: Think what to do about config with possible side effects, dynamic binding and overriding config options for kickstart.
+
 ## Conventions
 
 1. The types are denoted after `:` and use the [luaKITTENS annotation system](#luaKITTENS).
@@ -93,15 +95,17 @@ Each valid cpp-tools module has the following structure:
 
 - **events**: `{ [EventName]: fn }` - The functions has to have the following signature: `fn(config, ctx): ModuleResult`
 	`config` is the evaluated config for this function, `ctx` is the execution context, which currently consists of:
+	<!-- TODO: ModuleResult -->
 	- **id**: `number` - Autocommand id
 	- **event**: `string` - Name of the triggered event
 	- **group**: `number` - Autocommand group id
-	- **match**: `string` - Expanded value of <amatch>
-	- **buf**: `number` - Expanded value of <abuf>
-	- **file**: `string` - Expanded value of <afile>
+	- **buffer**: `number` - The buffer the event was fired in
+	- **filetype**: `string` - The filetype the the event fired in
+	- **file**: `string` - The filename in which the event filed
 	- **data**: `any` - Arbitrary data passed from `nvim_exec_autocmds()`
 
 - **init**: `fn` - A function called once at the beginning if the module is enabled and the user visited one of the filetypes once.
+	The signature is the same as the one of `events` fn.
 
 # luaKITTENS
 <!-- TODO: --> Proper spec
