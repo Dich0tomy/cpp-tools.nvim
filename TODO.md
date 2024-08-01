@@ -1,7 +1,10 @@
 # TODO
 
 - [x] Add testing and linting to CI
-- [ ] Add iter spec
-- [ ] Add basic technical spec
-- [ ] Create the module system based on the spec (+ tests)
-- [ ] Create the first module (preamble) (+ tests)
+- [x] Add iter tests
+- [x] Add basic technical tests
+- [ ] Create the module system based on the spec
+- [ ] Create the first module (lsp)
+- [ ] Create the preamble module
+- [ ] Continue work on luaKITTENS
+- [ ] Continue work on luaKITTENS
