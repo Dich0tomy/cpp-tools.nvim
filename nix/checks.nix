@@ -37,6 +37,7 @@
         fs.toSource {
           inherit root;
           fileset = fs.unions [
+            (root + /testfiles)
             (root + /ftplugin)
             (root + /lua)
             (root + /.busted)

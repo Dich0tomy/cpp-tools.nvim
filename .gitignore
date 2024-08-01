@@ -28,6 +28,9 @@
 !ftplugin/
 !*.rockspec
 
+# Testing
+!testfiles/
+
 # Plugin test & lint
 !.busted
 !.luacheckrc
