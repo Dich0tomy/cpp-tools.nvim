@@ -3,6 +3,7 @@
 --- and runs their __test functions with busted test context.
 
 local current_filename = debug.getinfo(1).source:match('([%w_%.]+)$')
+local testfiles_dir = vim.fs.root(0, '.git') .. '/testfiles'
 
 local function project_lua_files(path, type)
 	return type == 'file' and vim.endswith(path, 'lua') and not vim.endswith(path, current_filename)
@@ -30,7 +31,7 @@ local function run_module_test(name)
 
 	local test_func = vim.tbl_get(module, '__test')
 	if test_func then
-		setfenv(test_func, getfenv())()
+		setfenv(test_func, getfenv())(testfiles_dir)
 	end
 end
 
