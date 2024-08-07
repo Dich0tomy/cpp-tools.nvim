@@ -9,12 +9,8 @@ local function project_lua_files(path, type)
 	return type == 'file' and vim.endswith(path, 'lua') and not vim.endswith(path, current_filename)
 end
 
-local function path_to_requirable(path)
-	return path:match('lua/(.*)'):gsub('/init%.lua', ''):gsub('%.lua', ''):gsub('/', '.')
-end
-
 local function run_module_test(name)
-	local ok, module = pcall(require, name)
+	local ok, module = pcall(dofile, name)
 	if not ok then
 		describe(name, function()
 			it('Has an error!', function()
@@ -39,8 +35,4 @@ local function is_lua_dir(dir)
 	return vim.startswith(dir, 'lua')
 end
 
-vim
-	.iter(vim.fs.dir('.', { depth = 10, skip = is_lua_dir }))
-	:filter(project_lua_files)
-	:map(path_to_requirable)
-	:each(run_module_test)
+vim.iter(vim.fs.dir('.', { depth = 10, skip = is_lua_dir })):filter(project_lua_files):each(run_module_test)
