@@ -18,6 +18,7 @@
 * [Goals for the **next** release](#goals-for-the-next-release)
 * [Non-goals for **any** release](#non-goals-for-any-release)
 * [Not sure if I'll ever implement these](#not-sure-if-ill-ever-implement-these)
+	* [Stash (For things that are not categorized or well though of yet)](#stash-for-things-that-are-not-categorized-or-well-though-of-yet)
 * [Known issues and questions](#known-issues-and-questions)
 
 <!-- vim-markdown-toc -->
@@ -129,8 +130,18 @@ The plugin defines and responds to the following autocommand events:
 
 # Not sure if I'll ever implement these
 
+## Stash (For things that are not categorized or well though of yet)
+ - [ ] Find a way to reliably have access to the language server's features outside of C++ files.
+ - [ ] The problem with just attaching a client to any buffers will try to do things with the buffer - parse it, show diagnostics, etc.
+ - [ ] Some way to still provide go to definition even for semantic errors?
+ - [ ] Some way to easily check the versions of dependencies and general project info
+ - [ ] Better insert adding. If a symbol has been used manually and has a valid insert we insert a header lmao.
+
 - Linting:
   - [ ] Better integration with iwyu and such
+
+- Intelligence:
+	- [ ] Better lsp symbols with filtering and whatnot
 
 - Productivity:
   - [ ] Automatically define templates based on the contents
