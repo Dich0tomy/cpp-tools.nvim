@@ -3,7 +3,7 @@
 --- and runs their __test functions with busted test context.
 
 local current_filename = debug.getinfo(1).source:match('([%w_%.]+)$')
-local testfiles_dir = vim.fs.root(0, 'testfiles')
+local testfiles_dir = vim.fs.root(0, 'testfiles') .. '/testfiles'
 
 local function project_lua_files(path, type)
 	return type == 'file' and vim.endswith(path, 'lua') and not vim.endswith(path, current_filename)
