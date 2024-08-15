@@ -12,6 +12,7 @@
 !.luarc.json
 !.editorconfig
 !stylua.toml
+!.styluaignore
 !.pre-commit-config.yaml
 !git-conventional-commits.yaml
 
