@@ -2,7 +2,7 @@
 --- This file scans all the requirable `lua/` files from here
 --- and runs their __test functions with busted test context.
 
-local current_filename = debug.getinfo(1).source:match('([%w_%.]+)$')
+local current_filename = require('cpp-tools.lib.paths').current_filename()
 local testfiles_dir = vim.fs.root(0, 'testfiles') .. '/testfiles'
 
 local function project_lua_files(path, type)
