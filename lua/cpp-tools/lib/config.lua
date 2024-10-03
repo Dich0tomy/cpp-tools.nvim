@@ -46,13 +46,14 @@ local function add_implicit_fields(name, config_spec)
 	return vim.tbl_extend('keep', config_spec, implicit_fields)
 end
 
-function M.get_config()
-	return vim.tbl_extend_deep('force', vim.g.cpp_tools_global or {}, vim.g.cpp_tools or {})
+---Returns the value of user-set config, `vim.g.cpp_tools_global` overridden with `vim.g.cpp_tools`
+function M.get_user_config()
+	return vim.tbl_deep_extend('force', vim.g.cpp_tools_global or {}, vim.g.cpp_tools or {})
 end
 
 ---Evaluates a configuration for a module
 ---@param name string The module name
----@param config_spec cpp-tools.config.ConfigSpec
+---@param config_spec cpp-tools.config.ConfigSpec The config specification of the module
 ---@param runtime_value cpp-tools.config.UserConfig
 function M.evaluate(name, config_spec, runtime_value)
 	config_spec = add_implicit_fields(name, config_spec)
