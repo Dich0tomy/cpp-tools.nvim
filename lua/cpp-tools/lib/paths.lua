@@ -39,6 +39,12 @@ function M.current_path()
 	return debug.getinfo(2).source:sub(2)
 end
 
+---Returns an absolute dir of the calling script
+---@return string # The path
+function M.current_dir()
+	return vim.fs.dirname(debug.getinfo(2).source:sub(2))
+end
+
 ---Returns the filename of the calling script
 ---@return string # The filename
 function M.current_filename()
