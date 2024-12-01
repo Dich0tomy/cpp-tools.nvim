@@ -8,7 +8,6 @@ function M.__test(testfiles_dir)
 	describe('auto test runner', function()
 		it('returns a proper testfiles dir', function()
 			local file = testfiles_dir .. '/auto_test_runner/test.txt'
-			print(file)
 			local f, msg = io.open(file)
 
 			if not f then

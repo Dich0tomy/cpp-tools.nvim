@@ -1,5 +1,7 @@
 local M = {}
 
+-- TODO: Use an iter mechanism instead of relying on tables everywhere
+
 ---Counts the lines in a string
 ---@param str string the string to count lines for
 ---@return number line count # The number of lines
@@ -60,6 +62,47 @@ function M.partition(range, pred, proj_beg)
 
 	return vim.iter(range):map(proj_beg):filter(pred):totable() or {},
 		vim.iter(range):map(proj_beg):filter(fp.nah(pred)):totable() or {}
+end
+
+-- TODO: Instead of using an overengineered map thingy
+-- have a more robust vim.iter mechanism
+
+---Maps a range using a function, index or a name of an internal field
+---Using a function will map the current element using the function,
+---Using a field name will do `vim.tbl_get(t, name)`
+---Using an integer will do `t[idx]`
+---e.g. `fp.map({ { foo = 1 } }, 1, 'foo', function(x) return x * 2 end)` will return { 2 }
+---@generic T, U
+---@param range [`T`] The range to partition
+---@param ... integer|string|fun(T): U Mapping functions or field names
+---@return [U]|[any]
+function M.map(range, ...)
+	local mappings = { ... }
+	return vim
+		.iter(range)
+		:map(function(t)
+			return vim.iter(mappings):fold(t, function(final, mapping)
+				local mapping_type = type(mapping)
+				if mapping_type == 'string' then
+					assert(
+						type(t) == 'table',
+						('The type of element must be a table to use a field name mapping (type type is [%s])'):format(type(t))
+					)
+
+					return vim.tbl_get(final, mapping)
+				elseif mapping_type == 'number' then
+					return final[mapping]
+				elseif mapping_type == 'function' then
+					return mapping(final)
+				else
+					assert(
+						false,
+						('The type of mapping must be a function, a string or an integer, not [%s]'):format(mapping_type)
+					)
+				end
+			end)
+		end)
+		:totable()
 end
 
 ---@package
@@ -195,6 +238,92 @@ function M.__test()
 
 			assert.are.same(good, { 2, 4, 6, 8 })
 			assert.are.same(bad, { 10, 12, 14, 16 })
+		end)
+	end)
+
+	describe('`map()`', function()
+		it('Maps using a function', function()
+			local arr = { 1, 2, 3, 4 }
+			local mapped = M.map(arr, function(n)
+				return n * 2
+			end)
+
+			assert.are.same(mapped, { 2, 4, 6, 8 })
+		end)
+		it('Maps using chained functions', function()
+			local arr = { 1, 2, 3, 4 }
+			local mapped = M.map(
+				arr,
+				function(n)
+					return n * 2
+				end, -- 2 4 6 8
+				function(n)
+					return n - 1
+				end -- 1 3 5 7
+			)
+
+			assert.are.same(mapped, { 1, 3, 5, 7 })
+		end)
+
+		it('Maps using a single field name', function()
+			local arr = {
+				{ foo = 1, bar = 2 },
+				{ foo = 1, bar = 2 },
+				{ foo = 1, bar = 2 },
+			}
+			local foos = M.map(arr, 'foo')
+			local bars = M.map(arr, 'bar')
+
+			assert.are.same(foos, { 1, 1, 1 })
+			assert.are.same(bars, { 2, 2, 2 })
+		end)
+
+		it('Maps nested tables', function()
+			local arr = {
+				{ foo = { bar = 1, qoox = { foox = 2, boox = 5 } } },
+				{ foo = { bar = 2, qoox = { foox = 1, boox = 4 } } },
+			}
+			local bars = M.map(arr, 'foo', 'bar')
+			local fooxes = M.map(arr, 'foo', 'qoox', 'foox')
+
+			assert.are.same(bars, { 1, 2 })
+			assert.are.same(fooxes, { 2, 1 })
+		end)
+
+		it('Maps with both functions and field names tables', function()
+			local arr = {
+				{ foo = { bar = 1, qoox = { foox = 2, boox = 5 } } },
+				{ foo = { bar = 2, qoox = { foox = 2, boox = 5 } } },
+			}
+			local bars = M.map(arr, 'foo', 'bar', function(e)
+				return e * 2
+			end)
+
+			assert.are.same(bars, { 2, 4 })
+		end)
+
+		it('Maps using index', function()
+			local arr1 = {
+				{ { foo = 1, bar = 2 } },
+				{ { foo = 1, bar = 2 } },
+			}
+			local arr2 = {
+				{ foo = { 1, 2 } },
+				{ foo = { 1, 2 } },
+			}
+			local arr3 = {
+				{ { { { 'foo' } } } },
+			}
+
+			local mapped1 = M.map(arr1, 1, 'foo')
+			local mapped2 = M.map(arr2, 'foo', 2)
+			local mapped3 = M.map(arr3, 1, 1, 1, 1, function(s)
+				return ('%sbar'):format(s)
+			end)
+
+			assert.are.same(mapped1, { 1, 1 })
+			assert.are.same(mapped2, { 2, 2 })
+			assert.are.same(mapped3, { 'foobar' })
 		end)
 	end)
 end
